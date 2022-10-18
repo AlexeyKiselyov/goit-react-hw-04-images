@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { requestGallery } from './services/api';
@@ -11,147 +11,84 @@ import { Loader } from './Loader/Loader';
 import s from './App.module.css';
 // =====================================
 
-export class App extends Component {
-  state = {
-    query: '',
-    gallery: [],
-    image: null,
-    tags: null,
-    page: 1,
-    error: null,
-    isLoading: false,
-  };
-
-  componentDidUpdate(_, prevState) {
-    const { query, page,error } = this.state;
-
-    if (prevState.query !== query || prevState.page !== page) {
-      this.fetchGallery();
+export const App = () => {
+  const [query, setQuery] = useState('');
+  const [gallery, setGallery] = useState([]);
+  const [image, setImage] = useState(null);
+  const [tags, setTags] = useState(null);
+  const [page, setPage] = useState(1);
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); 
+  
+    useEffect(() => {
+    if (query==="") {      
+      return;
     }
-    
-    if(error){
-      toast.warn(error);
-    }    
-  } 
+    fetchGallery();
+  }, [query, page]);
 
-  fetchGallery=()=>{
-    const { query, page } = this.state;
+  useEffect(() => {
+    toast.warn(error);
+  }, [error]);
 
-    this.setState({
-      isLoading: true,
-      error:null
-    });
+    const fetchGallery = () => {
+    setIsLoading(true);
+    setError(null);
 
-    requestGallery(query, page).then(response => {        
+    requestGallery(query, page)
+      .then(response => {
         if (response.data.hits.length === 0) {
           toast.info('Nothing was find');
           return;
         }
-        this.setState(prevState => ({
-          gallery: [...prevState.gallery, ...response.data.hits],
-        }))
+        setGallery(pGallery => [...pGallery, ...response.data.hits]);
       })
       .catch(error => {
-        this.setState({ error: error.message });
+        setError(error.message);
       })
       .finally(() => {
-        this.setState({ isLoading: false });        
-      });    
-  }
+        setIsLoading(false);
+      });
+  };
 
-  onSubmit = queryUpdate => {
-    if(this.state.query===queryUpdate){
+  const onSubmit = queryUpdate => {
+    if (query === queryUpdate) {
       toast.info('Try to write something new :)');
       return;
     }
-    this.setState({
-      query: queryUpdate,
-      gallery: [],
-      page: 1,
-    });
+    setQuery(queryUpdate);
+    setGallery([]);
+    setPage(1);
   };
 
-  loadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const loadMore = () => {
+    setPage(pPage => pPage + 1);
   };
 
-  onModalOpen = (imageLarge, tags) => {
-    this.setState({
-      image: imageLarge,
-      tags,
-    });
+  const onModalOpen = (imageLarge, tags) => {
+    setImage(imageLarge);
+    setTags(tags);
   };
 
-  onCloseModal = () => {
-    this.setState({
-      image: null,
-      tags: null,
-    });
+  const onCloseModal = () => {
+    setImage(null);
+    setTags(null);
   };
 
-  render() {
-    const { gallery, image, tags, isLoading } = this.state;
-    return (
-      <div className={s.app}>
-        <Searchbar onSubmit={this.onSubmit} />
-        {isLoading && <Loader />}
-        {gallery.length > 0 && (
-          <>
-            <ImageGallery>
-              <ImageGalleryItem
-                gallery={gallery}
-                onModalOpen={this.onModalOpen}
-              />
-            </ImageGallery>
-            <Button loadMore={this.loadMore} />
-          </>
-        )}
-        {image && (
-          <Modal image={image} tags={tags} onCloseModal={this.onCloseModal} />
-        )}
-        <ToastContainer autoClose={3000}/>
-      </div>
-    );
-  }
-}
-
-
-
-
-
-
-
-
-
-
-// fetchGallery= ()=>{
-//   const { query, page } = this.state;
-//   try {
-//     this.setState({
-//       isLoading:true,
-//       error: null,
-//     });
-//     console.log("try");
-
-//     requestGallery(query, page).then(response => {
-//       console.log(response);
-//       if (response.data.hits.length === 0) {
-//         toast.info('Nothing was found');
-//         return;
-//       }
-//       this.setState(prevState => ({
-//         gallery: [...prevState.gallery, ...response.data.hits],
-//       }));
-//     });
-//   } catch (error) {
-//     console.log('Error');
-//     this.setState({ error: error.message });
-//   } finally {
-//     console.log('Finaly');
-//     this.setState({
-//       isLoading: false,        
-//     });
-//   }
-// }
+  return (
+    <div className={s.app}>
+      <Searchbar onSubmit={onSubmit} />
+      {isLoading && <Loader />}
+      {gallery.length > 0 && (
+        <>
+          <ImageGallery>
+            <ImageGalleryItem gallery={gallery} onModalOpen={onModalOpen} />
+          </ImageGallery>
+          <Button loadMore={loadMore} />
+        </>
+      )}
+      {image && <Modal image={image} tags={tags} onCloseModal={onCloseModal} />}
+      <ToastContainer autoClose={3000} />
+    </div>
+  );
+};
