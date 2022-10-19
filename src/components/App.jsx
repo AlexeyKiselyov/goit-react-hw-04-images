@@ -18,38 +18,38 @@ export const App = () => {
   const [tags, setTags] = useState(null);
   const [page, setPage] = useState(1);
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); 
-  
-    useEffect(() => {
-    if (query==="") {      
+  const [isLoading, setIsLoading] = useState(false);  
+
+  useEffect(() => {
+    if (query === '') {
       return;
     }
+
+    const fetchGallery = () => {
+      setIsLoading(true);
+      setError(null);
+  
+      requestGallery(query, page)
+        .then(response => {
+          if (response.data.hits.length === 0) {
+            toast.info('Nothing was find');
+            return;
+          }
+          setGallery(pGallery => [...pGallery, ...response.data.hits]);
+        })
+        .catch(error => {
+          setError(error.message);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    };
     fetchGallery();
   }, [query, page]);
 
   useEffect(() => {
     toast.warn(error);
   }, [error]);
-
-    const fetchGallery = () => {
-    setIsLoading(true);
-    setError(null);
-
-    requestGallery(query, page)
-      .then(response => {
-        if (response.data.hits.length === 0) {
-          toast.info('Nothing was find');
-          return;
-        }
-        setGallery(pGallery => [...pGallery, ...response.data.hits]);
-      })
-      .catch(error => {
-        setError(error.message);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  };
 
   const onSubmit = queryUpdate => {
     if (query === queryUpdate) {
