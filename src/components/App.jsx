@@ -44,6 +44,7 @@ export const App = () => {
           setIsLoading(false);
         });
     };
+    
     fetchGallery();
   }, [query, page]);
 
